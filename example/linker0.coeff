@@ -1,0 +1,35 @@
+variable        ESequence string " O C C H"
+pair_coeff 1 1 lj/cut 0.06 3.11814551348945 #O_2:O_2
+pair_coeff 1 2 lj/cut 0.0793725393319377 3.27076329615347 #C_2:O_2
+pair_coeff 1 3 lj/cut 0.0793725393319377 3.27076329615347 #C_R:O_2
+pair_coeff 1 4 lj/cut 0.0513809303146605 2.83146057944596 #H_:O_2
+pair_coeff 2 2 lj/cut 0.105 3.43085096355653 #C_2:C_2
+pair_coeff 2 3 lj/cut 0.105 3.43085096355653 #C_R:C_2
+pair_coeff 2 4 lj/cut 0.0679705818718657 2.97004655417555 #H_:C_2
+pair_coeff 3 3 lj/cut 0.105 3.43085096355653 #C_R:C_R
+pair_coeff 3 4 lj/cut 0.0679705818718657 2.97004655417555 #H_:C_R
+pair_coeff 4 4 lj/cut 0.044 2.57113370055158 #H_:H_
+bond_coeff 1 harmonic 599.390467250084 1.34557368543394 #O_2:1:C_2
+bond_coeff 2 harmonic 805.258367052069 1.21945472415445 #O_2:2:C_2
+bond_coeff 3 harmonic 389.261714934618 1.461 #C_R:1:C_2
+bond_coeff 4 harmonic 462.655054112394 1.37925640540079 #C_R:1.5:C_R
+bond_coeff 5 harmonic 357.440381043772 1.08141804032679 #C_R:1:H_
+bond_coeff 6 harmonic 389.261714934618 1.461 #C_2:1:C_R
+angle_coeff 1 fourier 86.0769140020613 3 4 2 #O_2:C_2:O_2
+angle_coeff 2 fourier 54.6768952294405 3 4 2 #O_2:C_2:C_R
+angle_coeff 3 fourier 40.4897676170746 3 4 2 #C_R:C_R:C_2
+angle_coeff 4 fourier 44.0471229159345 3 4 2 #C_R:C_R:C_R
+angle_coeff 5 fourier 24.6950023257486 3 4 2 #C_R:C_R:H_
+angle_coeff 6 fourier 43.9043833374335 3 4 2 #C_2:C_R:C_R
+dihedral_coeff 1 fourier 1 5 2 180 #O_2:C_2:C_R:C_R
+dihedral_coeff 2 fourier 1 13.4742207594606 2 180 #C_2:C_R:C_R:C_R
+dihedral_coeff 3 fourier 1 13.4742207594606 2 180 #C_R:C_R:C_R:C_R
+dihedral_coeff 4 fourier 1 13.4742207594606 2 180 #C_2:C_R:C_R:H_
+dihedral_coeff 5 fourier 1 13.4742207594606 2 180 #C_R:C_R:C_R:H_
+dihedral_coeff 6 fourier 1 13.4742207594606 2 180 #C_R:C_R:C_R:C_2
+dihedral_coeff 7 fourier 1 13.4742207594606 2 180 #H_:C_R:C_R:H_
+improper_coeff 1 fourier 16.6666666666667 1 -1 0 0 #O_2::O_2:C_2:C_R
+improper_coeff 2 fourier 2 1 -1 0 0 #C_2::C_R:C_R:C_R
+improper_coeff 3 fourier 2 1 -1 0 0 #C_R::C_R:C_R:H_
+improper_coeff 4 fourier 2 1 -1 0 0 #C_R::C_R:C_R:C_2
+improper_coeff 5 fourier 16.6666666666667 1 -1 0 0 #C_R::O_2:O_2:C_2
