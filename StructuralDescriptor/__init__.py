@@ -1,2 +1,4 @@
 from StructuralDescriptor import moment
 from StructuralDescriptor import voxel
+from StructuralDescriptor import orient
+from StructuralDescriptor import pointNet

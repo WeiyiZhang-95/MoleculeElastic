@@ -95,4 +95,3 @@ def moment(positions, weight = [], momType = 'gmom',upto=-1,order=-1,orders = []
 
     result = returnMom(moments,ifIndex)
     return result
-
