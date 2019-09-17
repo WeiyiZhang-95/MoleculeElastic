@@ -322,3 +322,9 @@ class fd:
             dir.append('/')
         file = open(dir+filename,'r')
         self.factors = calcFileFeatures(file, plotting = plotting, lab=lab, dir = dir)
+
+if __name__ == '__main__':
+    _debug = False
+    if _debug:
+        test = fd('-ave-force.d')
+        print(test.factors)

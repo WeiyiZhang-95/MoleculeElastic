@@ -442,6 +442,8 @@ class all:
         self.name = name
         if dir[-1] != '/':
             self.dir = dir + '/'
+        else:
+            self.dir = dir
         if lmpFile:
             self.lmpFile = lmpFile
         else:
