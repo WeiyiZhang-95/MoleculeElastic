@@ -38,6 +38,8 @@ class xyz():
             if data[0].find('Timestep') != -1 or data[0].find('timestep') != -1:
                 data.pop(0)
                 break
+            if len(data[0].split()) == 4:
+                break
             data.pop(0)
         while data:
             if ''.join(data[0]).find('Timesteps:') != -1 and ''.join(data[0]).find('timesteps:') != -1:
