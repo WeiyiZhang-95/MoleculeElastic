@@ -5,6 +5,12 @@ import env.GlobalSetting
 
 elements = [e for e in env.GlobalSetting._ELEMENTS_]
 def pointNet(positions, types):
+    '''
+    calculate pointNet descriptor
+    :param positions: atoms positions
+    :param types: atoms species
+    :return: pointNet
+    '''
     points = []
     positions = positions
     for i in range(len(types)):

@@ -7,6 +7,8 @@ import numpy as np
 from sklearn.decomposition import PCA
 import scipy.sparse
 
+
+#Voxelization parameters
 #VOXESCALE = 0.2
 VOXESCALE = env.GlobalSetting.VOXESCALE
 #THETA = 0.6
@@ -26,15 +28,24 @@ for e in elements:
     elements[e].cutoff = math.ceil(CUTOFF * elements[e].theta / VOXESCALE)
 systemCutoff = max([elements[e].cutoff for e in elements])
 
+
+#plotting parameters
 color = [[0, 0, 1], [1, 0.5, 0], [0, 1, 0], [1, 0, 0]]
 color_scatter = ["blue", "orange", "green", "red"]
 # H: blue, C: orange N: green O: red
-
-
 cmaps1 = ["PiYG", "PRGn", "PuOr", "RdGy"]
 cmaps2 = ['Purples','Blues','Greens','Reds']
 
+
 def calcVoxels(deltaX, deltaY, deltaZ, ele):
+    '''
+    calculate value of one voxel from one atom
+    :param deltaX: x difference from the voxel center to the atom
+    :param deltaY: y difference from the voxel center to the atom
+    :param deltaZ: z difference from the voxel center to the atom
+    :param ele: the element species of the atom
+    :return:
+    '''
     if deltaX == 0 and deltaY == 0 and deltaZ == 0 and elements[ele].theta == 0:
         return 1
     if elements[ele].theta == 0:
@@ -45,10 +56,25 @@ def calcVoxels(deltaX, deltaY, deltaZ, ele):
     return math.exp(-(deltaX ** 2 + deltaY ** 2 + deltaZ ** 2) * (VOXESCALE ** 2) / (2 * (elements[ele].theta ** 2)))
 
 def waveTransform(deltaX, deltaY, deltaZ, ele):
+    '''
+    calculate value of one voxel from one atom with wave transformation
+    :param deltaX: x difference from the voxel center to the atom
+    :param deltaY: y difference from the voxel center to the atom
+    :param deltaZ: z difference from the voxel center to the atom
+    :param ele: the element species of the atom
+    :return:
+    '''
     return math.cos(2 * math.pi * elements[ele].omega * VOXESCALE * ((deltaX ** 2 + deltaY ** 2 + deltaZ ** 2) ** 0.5))\
            * calcVoxels(deltaX, deltaY, deltaZ, ele)
 
-def channel(position,type,waveTrans = True):
+def channel(position, type, waveTrans = True):
+    '''
+    calculate voxelization data with channels
+    :param position: atom coordinates
+    :param type: atom species
+    :param waveTrans: if apply wave transformation
+    :return: voxelization results
+    '''
     species = []
     for e in type:
         if e not in species:
@@ -78,12 +104,25 @@ def channel(position,type,waveTrans = True):
     return dataMatrix, limit
 
 def whole(position, waveTrans = True):
+    '''
+    calculate voxelization data without channels as one whole space
+    :param position: atom coordinates
+    :param waveTrans: if apply wave transformation
+    :return: voxelization results
+    '''
     l = ['unidentified' for i in range(len(position))]
 
     dataMatrix, limit = channel(position,l,waveTrans = waveTrans)
     return dataMatrix, limit
 
 def plot(dataMatrix, limit,waveTrans = True):
+    '''
+    visualize voxelization result
+    :param dataMatrix: voxelization data
+    :param limit: box
+    :param waveTrans: if wave trans formation applied
+    :return:
+    '''
     size = [0, 0, 0]
     for i in range(len(size)):
         size[i] = limit[i][-1]-limit[i][0]

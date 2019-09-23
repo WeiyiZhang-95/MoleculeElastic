@@ -1,3 +1,4 @@
+# calculate moments of given molecule
 import math
 import numpy as np
 import types
@@ -7,13 +8,26 @@ import env.GlobalSetting
 _coorID_ = env.GlobalSetting._coorID_
 
 def toStr(n,base):
-   convertString = "0123456789ABCDEF"
-   if n < base:
-      return convertString[n]
-   else:
-      return toStr(n//base,base) + convertString[n%base]
+    '''
+    convert a number to a string
+    :param n: the number
+    :param base: signals used to represent the number
+    :return: string
+    '''
+    convertString = "0123456789ABCDEF"
+    if n < base:
+       return convertString[n]
+    else:
+       return toStr(n//base,base) + convertString[n%base]
 
 def momentCalc(position,index,weight = []):
+    '''
+    calculate specific moment of given index
+    :param position: molecule positions
+    :param index: index of calculated moment
+    :param weight: weight of each atoms
+    :return:
+    '''
     data = [0]
     if type(index) == type(1.0) or type(index) == type(1):
         index = str(int(index))
@@ -36,6 +50,13 @@ def momentCalc(position,index,weight = []):
     return data[0]/(sum(weight))
 
 def momOrder(positions,mass,order):
+    '''
+    calculate moments of one given order
+    :param position: molecule positions
+    :param mass: masses of atoms
+    :param order: order of request moment
+    :return: results
+    '''
     num = int(3**order)
     base = int(int(toStr((num-1),3))/2)
     moment = {}
@@ -48,9 +69,22 @@ def momOrder(positions,mass,order):
     return moment
 
 def gmomOrder(positions,order):
+    '''
+    geometry moments
+    :param positions: atom positions
+    :param order: inquiry order of moments
+    :return: moments results
+    '''
     return momOrder(positions,np.ones(len(positions)),order)
 
 def mom(positions,masses,orders):
+    '''
+    calculate moments of demanded orders
+    :param position: molecule positions
+    :param mass: masses of atoms
+    :param order: orders of request moments
+    :return: results
+    '''
     moment = {}
     for e in orders:
         temp = momOrder(positions,masses,e)
@@ -59,21 +93,59 @@ def mom(positions,masses,orders):
     return moment
 
 def gmom(positions,orders):
+    '''
+    calculate geometry moments of demanded orders
+    :param position: molecule positions
+    :param order: orders of request moments
+    :return: results
+    '''
     return mom(positions,np.ones(len(positions)),orders)
 
 def momAll(positions,masses,upto):
+    '''
+    calculate moments of demanded orders
+    :param position: molecule positions
+    :param masses: masses of atoms
+    :param upto: demanded orders of moments will be [0, upto]
+    :return: results
+    '''
     return mom(positions,masses,range(upto+1))
 
 def gmomAll(positions,upto):
+    '''
+    calculate geometry moments of demanded orders
+    :param position: molecule positions
+    :param upto: demanded orders of moments will be [0, upto]
+    :return: results
+    '''
     return gmom(positions,range(upto+1))
+
+def returnMom(moments,ifIndex):
+    '''
+    return moments with requested format
+    :param moments: moments
+    :param ifIndex: if return moments with their index
+    :return:
+    '''
+    if ifIndex:
+        return [moments[e] for e in moments]
+    else:
+        return moments
 
 def moment(positions, weight = [], momType = 'gmom',upto=-1,order=-1,orders = [],
                  index = '-1', ifIndex = False):
-    def returnMom(moments,ifIndex):
-        if ifIndex:
-            return [moments[e] for e in moments]
-        else:
-            return moments
+    '''
+
+    :param positions:
+    :param weight:
+    :param momType: geometry or physical (using mass as weight)
+    :param upto:
+    :param order:
+    :param orders:
+    :param index:
+    :param ifIndex:
+    :return:
+    '''
 
     moments = {}
     if index != '-1':

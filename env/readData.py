@@ -1,3 +1,5 @@
+# Functions to read data from .xyz, and LAMMPS files
+
 import os
 import numpy as np
 from env import GlobalSetting
@@ -27,8 +29,8 @@ class xyz():
 
     def readAtom(self):
         '''
-
-        :return:
+        read atoms parameters
+        :return: coordintes and species array read from file
         '''
         f = open(self.file, 'r')
         data = f.readlines()
@@ -57,7 +59,12 @@ class xyz():
         return self.atom, self.species
 
     def read(self):
+        '''
+        read data from .xyz file
+        :return: coordintes and species array read from file
+        '''
         return self.readAtom()
+
 class coe():
     '''
     Store data read from .coeff file
@@ -93,6 +100,10 @@ class coe():
             raise FileNotFoundError("coeff file -- (" + file + ") not EXIST!")
 
     def readPair(self):
+        '''
+        read pair parameters from LAMMPS input file
+        :return: pair parameters
+        '''
         f = open(self.file, 'r')
         data = f.readlines()
         f.close()
@@ -107,6 +118,11 @@ class coe():
         return self.pair
 
     def readF(self, name):
+        '''
+        read data from File with given label
+        :param name: the label to identify if lines needed being read
+        :return: data in lines with given label
+        '''
         f = open(self.file, 'r')
         data = f.readlines()
         temp = []
@@ -120,22 +136,43 @@ class coe():
         return np.array(temp, dtype='object')
 
     def readBond(self):
+        '''
+        read bond parameters
+        :return: bond parameters
+        '''
         self.bond = self.readF('bond')
         return self.bond
     def readAngle(self):
+        '''
+        read angel parameters
+        :return: angel parameters
+        '''
         self.angle = self.readF('angle')
         return self.angle
     def readDihedral(self):
+        '''
+        read dihedral parameters
+        :return: dihedral parameters
+        '''
         self.dihedral = self.readF('dihedral')
         return self.dihedral
     def readImproper(self):
+        '''
+        read improper parameters
+        :return: improper parameters
+        '''
         self.improper = self.readF('improper')
         return self.improper
 
     def read(self):
+        '''
+        read all needed parameter based on the setting
+        :return: all needed parameter
+        '''
         for e in self.readSet:
             if self.readSet[e]:
                 exec('self.{}()'.format(e))
+
 class lmp():
     '''
     Store data read from .lmpdat file
@@ -181,6 +218,11 @@ class lmp():
             raise FileNotFoundError("lmpdat file -- (" + file + ") not EXIST!")
 
     def readFile(self, funcName):
+        '''
+        Goes to the starting point to read data file
+        :param funcName:
+        :return:
+        '''
         f = open(self.file, 'r')
         data = f.readlines()
         f.close()
@@ -197,9 +239,9 @@ class lmp():
 
     def readBox(self, *args):
         '''
-
-        :param data:
-        :return:
+        read box parameters
+        :param args: shows if being called from the class or straightly
+        :return: box parameters
         '''
         box = []
         if len(args) == 0:
@@ -225,9 +267,9 @@ class lmp():
 
     def readEle(self, *args):
         '''
-
-        :param data:
-        :return:
+        read elements parameters
+        :param args: shows if being called from the class or straightly
+        :return: elements parameters
         '''
         if len(args) == 0:
             self.readFile('readEle')
@@ -256,9 +298,9 @@ class lmp():
 
     def readAtom(self, *args):
         '''
-
-        :param data:
-        :return:
+        read atoms parameters
+        :param args: shows if being called from the class or straightly
+        :return: atoms parameters (coordinates and species)
         '''
         if len(args) == 0:
             self.readFile('readAtom')
@@ -290,9 +332,9 @@ class lmp():
 
     def readBond(self, *args):
         '''
-
-        :param data:
-        :return:
+        read bond parameters
+        :param args: shows if being called from the class or straightly
+        :return: bonds shows bonded atoms
         '''
         if len(args) == 0:
             self.readFile('readBond')
@@ -321,9 +363,9 @@ class lmp():
 
     def readAngle(self, *args):
         '''
-
-        :param data:
-        :return:
+        read angle parameters
+        :param args: shows if being called from the class or straightly
+        :return: angel data
         '''
         if len(args) == 0:
             self.readFile('readAngle')
@@ -352,9 +394,9 @@ class lmp():
 
     def readDihedral(self, *args):
         '''
-
-        :param data:
-        :return:
+        read dihedral parameters
+        :param args: shows if being called from the class or straightly
+        :return: dihedrals parameters
         '''
         if len(args) == 0:
             self.readFile('readDihedral')
@@ -383,9 +425,9 @@ class lmp():
 
     def readImproper(self, *args):
         '''
-
-        :param data:
-        :return:
+        read improper parameters
+        :param args: shows if being called from the class or straightly
+        :return: atoms involved in impropers
         '''
         if len(args) == 0:
             self.readFile('readImproper')
@@ -413,6 +455,10 @@ class lmp():
         return self.impropers
 
     def read(self):
+        '''
+        read all data/parameters based on the setting
+        :return:
+        '''
         f = open(self.file, 'r')
         data = f.readlines()
         f.close()
@@ -431,7 +477,7 @@ class lmp():
 
 class all:
     '''
-
+    read data/parameters from all files
     '''
     readSet = {'readLmp': True,'readCoe': False,'readXyz': True}
     def __init__(self,name,dir = os.getcwd(),lmpFile = '',coeFile = '',xyzFile = '',readLmp= True,readCoe=False,readXyz=True,readAll = False):
@@ -470,6 +516,10 @@ class all:
                 self.readSet[e] = True
 
     def readLmp(self):
+        '''
+        read data from .lmpdat file
+        :return:
+        '''
         lmpData = lmp(self.name,dir =self.dir, file = self.lmpFile)
         lmpData.readSet['readBond'] = True
         lmpData.read()
@@ -484,16 +534,28 @@ class all:
         temp.clear()
         self.bond = lmpData.bond
     def readXyz(self):
+        '''
+        read from .xyz file
+        :return:
+        '''
         xyzData = xyz(self.name,dir =self.dir, file = self.xyzFile)
         xyzData.read()
         self.atom['Type'] = xyzData.species
         self.atom['xyzPosition'] = xyzData.atom
     def readCoe(self):
+        '''
+        read from .coeff file
+        :return:
+        '''
         coeData = coe(self.name,dir =self.dir, file = self.coeFile, readAll=True)
         coeData.read()
         for e in ('pair','bond','angle','dihedral','improper'):
             exec ("self.coeff['"+e+"'] = coeData."+e)
     def read(self):
+        '''
+        read all needed files
+        :return:
+        '''
         for e in self.readSet:
             if self.readSet[e]:
                 exec ('self.{}()'.format(e))

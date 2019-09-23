@@ -2,6 +2,13 @@ import numpy as np
 import os
 
 def addArray(arr, data, toEnd = True):
+    '''
+    add new data points to an array
+    :param arr: old array
+    :param data: new data
+    :param toEnd: with order or to the end
+    :return: new array
+    '''
     if len(arr) == 0:
         return np.array([data])
     l = np.zeros(len(data))
@@ -16,8 +23,15 @@ def addArray(arr, data, toEnd = True):
     arr = arr.reshape((int(len(arr)/len(data)),len(data)))
     return arr
 
-
 def addNpy(file, data, toEnd = True, dir = os.getcwd()):
+    '''
+    add new data tp .npy file
+    :param file: file name
+    :param data: new data
+    :param toEnd: with order or to the end
+    :param dir: directory
+    :return:
+    '''
     if file in os.listdir(dir):
         f = np.load(file)
     else:
@@ -27,6 +41,14 @@ def addNpy(file, data, toEnd = True, dir = os.getcwd()):
     return
 
 def writeFile(file, data, toEnd = True, dir = os.getcwd()):
+    '''
+    write new coming data to data files
+    :param file: file name
+    :param data: new data
+    :param toEnd: with order or to the end
+    :param dir: directory
+    :return:
+    '''
     line = '\t'.join([str(e) for e in data])
     line = line+'\n'
     f = open(file,'a')
