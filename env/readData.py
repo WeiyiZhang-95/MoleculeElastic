@@ -27,22 +27,31 @@ class xyz():
         if len(file) < 5 or file not in os.listdir(dir):
             raise FileNotFoundError("xyz file -- (" + file + ") not EXIST!")
 
-    def readAtom(self):
+    def readAtom(self, timestep = False):
         '''
-        read atoms parameters
-        :return: coordintes and species array read from file
+
+        :return:
         '''
         f = open(self.file, 'r')
         data = f.readlines()
         tempE = []
         tempA = []
-        while data:
-            if data[0].find('Timestep') != -1 or data[0].find('timestep') != -1:
+        if timestep == False:
+            while data:
+                if data[0].find('Timestep') != -1 or data[0].find('timestep') != -1:
+                    data.pop(0)
+                    break
+                if len(data[0].split()) == 4:
+                    break
                 data.pop(0)
-                break
-            if len(data[0].split()) == 4:
-                break
-            data.pop(0)
+        else:
+            timestep = str(timestep)
+            while data:
+                if data[0].find('Timestep') != -1 or data[0].find('timestep') != -1:
+                    if data[0].split(':')[-1].strip() == timestep:
+                        data.pop(0)
+                        break
+                data.pop(0)
         while data:
             if ''.join(data[0]).find('Timesteps:') != -1 and ''.join(data[0]).find('timesteps:') != -1:
                 break
@@ -560,3 +569,11 @@ class all:
             if self.readSet[e]:
                 exec ('self.{}()'.format(e))
 
+def test():
+    x = xyz('x', dir = '../example/', file='linker0-stretched.xyz')
+    x.readAtom(timestep=5673356)
+    print(x.atom)
+
+
+if __name__ == '__main__':
+    test()
