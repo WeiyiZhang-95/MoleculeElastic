@@ -1,0 +1,341 @@
+# A lammps instruction script todeform an linker molecule in some way - assumes run from sibling dir (../dir/)
+########################################################
+
+echo            both 		# Print command to the log file (useful for debuging) 
+boundary        f f f		# Use periodic BCs in all directions	
+units           real            # Ang, g/mol, Kcal/mol, fs, K, atmos
+
+#########################################################
+#	Define Simulation Parameters (CHANGE THESE)
+
+#variable        Linker string linker0 # Alloy label
+variable	Linker string linker${LinkerID}
+variable	OutDir string Output-Data  # Directory for created data files
+
+variable 	SkipMakeImage     equal 1  # Skip stepst that make png images? (1=yes/ 0=no) 
+variable 	SkipMinimize      equal 0  # Skip minimization step? (1=yes/ 0=no) 
+variable 	SkipHessian       equal 0  # Skip hessian calculation step? (1=yes/ 0=no) 
+variable 	SkipEquilib       equal 0  # Skip equilibration step? (1=yes/ 0=no) 
+variable 	SkipSquash        equal 0   # Skip squash with ends clamped? (1=yes/ 0=no) 
+variable 	SkipSquashPinned  equal 1   # Skip squash with ends pinned? (1=yes/ 0=no) 
+variable 	SkipSquashSlide   equal 1   # Skip squash with ends free to slide? (1=yes/ 0=no) 
+variable 	SkipSquashTwist   equal 1   # Skip squash with ends free to twist? (1=yes/ 0=no) 
+
+variable	d    equal 0.2	     # amplifude of random displacement
+variable        dt   equal 2e-4	      # Time step (ps)
+variable	Temp equal 300.0       # Equilibrate at this temperature
+
+variable	datafile string ${Linker}.lmpdat
+#variable	datafile string ${Linker}.coeff
+#variable	coeffile string ${Linker}.lmpdat
+variable	coeffile string ${Linker}.coeff
+
+variable	EqTime equal 50	      # Equilibration time (ps) 
+variable	DeformTime equal 200  # Deformation duration (ps) 
+variable	DumpInt equal 1.0     # Interval (in ps) between datafile writes
+
+variable	P equal 0.0          # Pressure (bar)
+variable 	SEED equal 1234567   # Seed for random number generator
+
+variable	Nthermo equal 10000  # Thermo output frequency
+
+#########################################################
+#	Axuiliary parameters (DON'T CHANGE THESE)
+
+variable 	ps2fs equal 1000
+variable 	dtfs equal ${dt}*${ps2fs}
+variable 	Tdrag equal ${dtfs}*100
+variable 	Pdrag equal ${dtfs}*1000
+variable 	Ndephase equal round(10/${dtfs})
+
+#########################################################
+#       Define the computational cell and create atoms
+#
+
+atom_style	full
+bond_style	hybrid harmonic
+angle_style	hybrid fourier 
+dihedral_style	hybrid fourier 
+improper_style	hybrid fourier 
+pair_style      hybrid lj/cut 10 
+special_bonds   lj 0.0 0.0 1.0
+read_data       ${datafile}
+timestep	${dtfs}
+variable        Nat equal count(all)
+#shell           ../config/extract-element-sequence.sh ${datafile}
+include         in.ESequence${LinkerID}
+
+#########################################################
+#             Define interatomic potential and atom masses
+#
+include		${coeffile}
+
+#########################################################
+#              Define thermo output
+#
+variable	StandardThermo string "custom step time temp etotal ke pe press vol"
+thermo_style	${StandardThermo}
+thermo		${Nthermo}
+thermo_modify   format float %10.7e # change the format of the floats to include 
+		       	     	    # lots of significant figures
+
+######################################################### 
+#               Minimize
+#
+if 		"${SkipMinimize} == 1" then "jump SELF DoneHessian"
+thermo		1
+dump		XYZ all xyz 2000 minimize.xyz
+dump_modify  	XYZ element ${ESequence}
+run		0
+displace_atoms	all random $d $d $d 3
+
+fix		ANNEAL all nvt temp 900 800 ${EqTime}        # anneal cooling from 300-5 K over ${EqTime} ps.
+#fix		VIS all viscous 0.2
+variable	Nrun equal round(${EqTime}/${dt})
+run		${Nrun}
+unfix 		ANNEAL
+#fix             VIS all viscous 0.2
+fix		ANNEAL all nvt temp 800 700 ${EqTime}       # anneal cooling from 300-5 K over ${EqTime} ps.
+run		${Nrun}
+unfix 		ANNEAL
+fix		ANNEAL all nvt temp 700 600 ${EqTime}        # anneal cooling from 300-5 K over ${EqTime} ps.
+run		${Nrun}
+unfix 		ANNEAL
+fix		ANNEAL all nvt temp 600 500 ${EqTime}       # anneal cooling from 300-5 K over ${EqTime} ps.
+run		${Nrun}
+unfix 		ANNEAL
+fix		ANNEAL all nvt temp 500 400 ${EqTime}       # anneal cooling from 300-5 K over ${EqTime} ps.
+run		${Nrun}
+unfix 		ANNEAL
+fix		ANNEAL all nvt temp 400 300 ${EqTime}       # anneal cooling from 300-5 K over ${EqTime} ps.
+run		${Nrun}
+unfix 		ANNEAL
+fix		ANNEAL all nvt temp 300 200 ${EqTime}       # anneal cooling from 300-5 K over ${EqTime} ps.
+run		${Nrun}
+unfix 		ANNEAL
+fix		ANNEAL all nvt temp 200 100 ${EqTime}       # anneal cooling from 300-5 K over ${EqTime} ps.
+run		${Nrun}
+unfix 		ANNEAL
+fix		ANNEAL all nvt temp 100 5.0 ${EqTime}       # anneal cooling from 300-5 K over ${EqTime} ps.
+run		${Nrun}
+unfix 		ANNEAL
+#unfix		VIS
+		
+
+min_style	fire
+minimize 	1.0e-8 1.0e-12 1000 10000
+
+undump		XYZ
+if 		"${SkipMakeImage} == 1" then "jump SELF DoneSnap1"
+dump            SNAP all image 1 ${Linker}-min-*.png element element &
+		zoom 4.0 &
+		box no 0.1 &
+		bond atom 0.025 &
+		size 720 720 &
+		ssao yes 4539 0.6#persp 0.5
+dump_modify     SNAP element ${ESequence} backcolor aliceblue 
+run		0
+undump          SNAP
+label           DoneSnap1
+thermo		${Nthermo}
+
+######################################################### 
+#               Compute Hessian
+#
+if 		"${SkipHessian} == 1" then "jump SELF DoneHessian"
+include		in.hessian
+label		DoneHessian
+
+######################################################### 
+#               BEGIN SIMULATION
+#	 
+
+# Define groups containing the terminal O atoms at the left and right
+# ends: Charlie, we need a way to do this systematically for all
+# molecules 
+variable	OL1 equal 1
+variable	OL2 equal 3
+variable	OR1 equal ${Nat}-1
+variable	OR2 equal ${Nat}
+group		LEFT  id ${OL1} ${OL2}
+group		LEFTCARBON id 2
+group		FIXLEFT subtract all LEFTCARBON
+group		RIGHT id ${OR1} ${OR2}
+group		ENDS union LEFT RIGHT
+group		FREE subtract all LEFT RIGHT
+#group		FREE subtract all LEFT
+variable	XL equal 0.5*(x[${OL1}]+x[${OL2}])
+variable	YL equal 0.5*(y[${OL1}]+y[${OL2}])
+variable	ZL equal 0.5*(z[${OL1}]+z[${OL2}])
+variable	XR equal 0.5*(x[${OR1}]+x[${OR2}])
+variable	YR equal 0.5*(y[${OR1}]+y[${OR2}])
+variable	ZR equal 0.5*(z[${OR1}]+z[${OR2}])
+
+
+####### Equilibrate in NVT for ${EqTime}
+
+if 		"${SkipEquilib} == 1" then "jump SELF DoneEquilib"
+variable        Nrun  equal round(${EqTime}/${dt}) 
+variable        Nxyz  equal round(${DumpInt}/${dt}) 
+#dump		XYZ all xyz ${Nxyz} equilibrate-nvt.xyz
+#dump_modify  	XYZ element ${ESequence}
+fix             ENSEMBLE FIXLEFT nvt temp 5.0 ${Temp} ${EqTime}
+run             ${Nrun}
+unfix           ENSEMBLE
+dump            XYZ all xyz ${Nxyz} equilibrate-nvt.xyz
+dump_modify     XYZ element ${ESequence}
+fix             ENSEMBLE FIXLEFT nvt temp ${Temp} ${Temp} ${EqTime}
+run             ${Nrun}
+unfix           ENSEMBLE
+undump		XYZ
+label		DoneEquilib
+
+####### Squash then stretch dynamically all in NVT with the ends totally free
+
+if 		"${SkipSquash} == 1" then "jump SELF DoneSquash"
+
+#-----------Reset time step  and compute time from now
+reset_timestep	0
+variable	timenow equal time
+variable	timev equal (time-${timenow})/${ps2fs}
+variable	timenow delete
+
+#------------Compute positions of ends, end-to-end distance, and end-to-end vector
+compute 	PL LEFT  reduce sum x y z
+compute 	PR RIGHT reduce sum x y z
+variable	Lx equal v_XR-v_XL
+variable	Ly equal v_YR-v_YL
+variable	Lz equal v_ZR-v_ZL
+variable	D equal sqrt(v_Lx^2+v_Ly^2+v_Lz^2)
+
+print 		"(Lx,Ly,Lz) =(${Lx},${Ly},${Lz})"
+#fix		RIGID ENDS rigid group 2 LEFT RIGHT
+
+#------------Define fixes for computing the averaged force on each end
+compute 	FL LEFT  reduce sum fx fy fz
+compute 	FR RIGHT reduce sum fx fy fz
+### HERE COMPUTE THE FORCE DIFFERNECE VECTOR compute 	DFL LEFT -- fx fy fz
+variable	DFLx equal (fx[${OL2}]-fx[${OL1}])
+variable	DFLy equal (fy[${OL2}]-fy[${OL1}])
+variable	DFLz equal (fz[${OL2}]-fz[${OL1}])
+variable	DFRx equal (fx[${OR2}]-fx[${OR1}])
+variable	DFRy equal (fy[${OR2}]-fy[${OR1}])
+variable	DFRz equal (fz[${OR2}]-fz[${OR1}])
+
+#variable	Faxial equal ((c_FL[1]-c_FR[1])*v_Lx+(c_FL[2]-c_FR[2])*v_Ly+(c_FL[3]-c_FR[3])*v_Lz)/v_D
+#variable	Fnx equal (c_FL[1]-c_FR[1])-v_Faxial*v_Lx/v_D
+#variable	Fny equal (c_FL[2]-c_FR[2])-v_Faxial*v_Ly/v_D
+#variable	Fnz equal (c_FL[3]-c_FR[3])-v_Faxial*v_Lz/v_D
+#variable	Fn equal sqrt(v_Fnx^2+v_Fny^2+v_Fnz^2)
+variable	PE equal pe
+variable	TE equal etotal
+variable	T  equal temp
+#fix		AV all ave/time 2 1000 2000 v_timev v_D v_Faxial v_Fn v_Fnx v_Fny v_Fnz v_Lx v_Ly v_Lz v_PE &
+#		file ${Linker}-ave-force.d
+fix		AV all ave/time 2 1000 2000 v_timev v_D c_FL[1] c_FL[2] c_FL[3] c_FR[1] c_FR[2] c_FR[3] v_DFLx v_DFLy v_DFLz v_DFRx v_DFRy v_DFRz v_Lx v_Ly v_Lz v_PE v_TE v_T file ${Linker}-ave-force.d
+
+#------------Define fixes for computing the averaged per atom pe and stress
+compute 	aPE all pe/atom
+compute         aST all stress/atom NULL
+variable	PE equal pe
+fix		AvPerAtomData all ave/atom 2 10000 20000 c_aPE c_aST[1] c_aST[2] c_aST[3] c_aST[4] c_aST[5] c_aST[6]
+dump		DumpAPAD all custom 20000 ${Linker}-peratomPS.dump id f_AvPerAtomData[1] f_AvPerAtomData[2] f_AvPerAtomData[3] f_AvPerAtomData[4] f_AvPerAtomData[5] f_AvPerAtomData[6] f_AvPerAtomData[7] 
+
+#------------Fix the thermostat ---- Note the coupling is tighter than for an ordenary simulation
+minimize        1.0e-8 1.0e-12 1000 10000
+variable	TdragTight equal ${Tdrag}/10
+fix             ENSEMBLE FREE nvt temp ${Temp} ${Temp} ${TdragTight}
+#fix             ENSEMBLE FREE nvt temp ${Temp} ${Temp} ${Tdrag}
+#fix 		BROWNIAN FREE langevin ${Temp} ${Temp} ${Tdrag} ${SEED} 
+#fix 		ENSEMBLE FREE nve
+
+#------------Define dumps of the movie file and a file of forces etc.
+variable        Nxyz  equal round(${DumpInt}/${dt})
+#variable        Nxyz  equal 1
+dump		XYZ all xyz ${Nxyz} ${Linker}-deform-nvt.xyz
+#dump		XYZ all xyz ${Nxyz} ${Linker}-deform-lengevin.xyz
+dump_modify  	XYZ element ${ESequence}
+compute         AtomPE all pe/atom
+dump		FRC all custom ${Nxyz} ${Linker}-force.variable id type x y z vx vy vz fx fy fz c_AtomPE
+dump_modify  	FRC sort id
+
+#------------Define the squash and stretch
+variable        EpsComp   equal 0.15           # Squashing strain
+variable        EpsTens   equal 0.10           # Stretching strain
+variable        Dsquash   equal -$D*${EpsComp} # Squashing distance (in Ang)
+variable        Dstretch  equal $D*${EpsTens}  # Stretching distance (in Ang)
+#variable        Dsquash  equal -1             # Squashing distance (in Ang), I can make this a fraction of the linker length
+#variable        Dstretch  equal 0.5           # Stretching distance (in Ang), I can make this a fraction of the linker length
+variable	Speed     equal 0.005	       # Squishing velocity (in Ang/ps) = m/s/1000
+
+
+#------------Now squash 
+variable	VX equal -${Speed}*${Lx}/(${D}*${ps2fs})
+variable	VY equal -${Speed}*${Ly}/(${D}*${ps2fs})
+variable	VZ equal -${Speed}*${Lz}/(${D}*${ps2fs})
+fix	      	SQUISH RIGHT move linear ${VX} ${VY} ${VZ} 
+variable        Nrun  equal round((abs(${Dsquash})/${Speed})/${dt}) 
+dump		Snap all xyz 1 ${Linker}-un-squashed.xyz
+dump_modify  	Snap element ${ESequence}
+run		0   
+undump		Snap		
+run             ${Nrun}
+dump		Snap all xyz 1 ${Linker}-squashed.xyz
+dump_modify  	Snap element ${ESequence}
+run		0   
+undump		Snap		
+
+#------------And stretch
+variable	VX equal -${VX}
+variable	VY equal -${VY}
+variable	VZ equal -${VZ}
+fix	      	SQUISH RIGHT move linear ${VX} ${VY} ${VZ} 
+variable        Nrun  equal round((abs(${Dstretch}-${Dsquash})/${Speed})/${dt}) 
+run             ${Nrun}
+dump		Snap all xyz 1 ${Linker}-stretched.xyz
+dump_modify  	Snap element ${ESequence}
+run		0   
+undump		Snap		
+
+#------------And squash once more
+variable	VX equal -${VX}
+variable	VY equal -${VY}
+variable	VZ equal -${VZ}
+fix	      	SQUISH RIGHT move linear ${VX} ${VY} ${VZ} 
+variable        Nrun  equal round((abs(${Dstretch})/${Speed})/${dt}) 
+run             ${Nrun}
+
+#------------Unfix and undump
+unfix           ENSEMBLE
+#unfix           BROWNIAN
+undump		XYZ
+undump		FRC
+
+label		DoneSquash
+
+
+####### Deform in NVT with ends able to rotate 
+
+if 		"${SkipSquashPinned} == 1" then "jump SELF DoneSquashPinned"
+
+label		DoneSquashPinned
+
+####### Deform in NVT with ends able to slide in y-z plane
+
+if 		"${SkipSquashSlide} == 1" then "jump SELF DoneSquashSlide"
+
+label		DoneSquashSlide
+
+####### Deform in NVT with ends able to twist in y-z plane
+
+if 		"${SkipSquashTwist} == 1" then "jump SELF DoneSquashTwist"
+
+label		DoneSquashTwist
+
+#------Finish up
+
+shell		log2txt.py log.lammps thermo
+dump		${Linker}.FINISHED
+
+#quit
+
