@@ -7,19 +7,19 @@ and 2) gain capability to predict/fast-characterize molecules kinetic features.
 
 ## Contents
 
-- [Characterization](characterization/chara.md): => [:point_right::open_file_folder::point_left:](characterization)
+- [Characterization](characterization/README.md): => [:point_right::open_file_folder::point_left:](characterization)
 
     - [LAMMPS](https://lammps.sandia.gov) simulation script example
     - Stiffness/Deforming-related analysis from output files of LAMMPS simulation
 
-- [env](env/env.md): => [:point_right::open_file_folder::point_left:](env)
+- [env](env/README.md): => [:point_right::open_file_folder::point_left:](env)
     
     *_Change parameters from here to make it suitable for your system_*
     - Useful tools for reading required data from LAMMPS input files or .xyz formatted files
     - General Setting calculation setups/parameters
     - General info of used molecular system
 
-- [StructuralDescriptor](StructuralDescriptor/descriptor.md): => [:point_right::open_file_folder::point_left:](StructuralDescriptor)
+- [StructuralDescriptor](StructuralDescriptor/README.md): => [:point_right::open_file_folder::point_left:](StructuralDescriptor)
 
     *_Different ways to represent molecular structure numerically_*
     - SMILE-based Encoding
